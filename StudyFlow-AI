@@ -1,0 +1,37 @@
+StudyFlow-AI/
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   ├── feature_request.md
+│   │   └── documentation.md
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   ├── lint.yml
+│   │   └── docs.yml
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── CODEOWNERS
+├── app/
+├── database/
+│   ├── migrations/
+│   ├── schema/
+│   ├── seeds/
+│   ├── rls/
+│   ├── sql/
+│   └── diagrams/
+├── docs/
+├── prompts/
+├── skills/
+├── templates/
+├── scripts/
+├── assets/
+├── examples/
+├── tests/
+├── README.md
+├── LICENSE
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── .editorconfig
+├── .gitignore
+└── eslint.config.js
