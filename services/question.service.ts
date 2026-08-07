@@ -2,39 +2,39 @@ import { db } from '@/lib/db';
 import type { Question } from '@/types';
 
 export class QuestionService {
-  async getQuestionsByTopic(topicId: string): Promise<Question[]> {
+  async getQuestions(options?: {
+    topicId?: string;
+    difficulty?: 'easy' | 'medium' | 'hard';
+    limit?: number;
+  }): Promise<Question[]> {
+    const limit = Math.min(Math.max(options?.limit ?? 20, 1), 100);
     const questions = await db.question.findMany({
-      where: { topicId },
-      include: {
-        alternatives: true,
-        topic: true,
+      where: {
+        topicId: options?.topicId,
+        difficulty: options?.difficulty,
       },
+      include: { alternatives: true, topic: true },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
     });
     return questions as Question[];
+  }
+
+  async getQuestionsByTopic(topicId: string, limit?: number): Promise<Question[]> {
+    return this.getQuestions({ topicId, limit });
   }
 
   async getQuestionsByDifficulty(
     difficulty: 'easy' | 'medium' | 'hard',
     limit?: number
   ): Promise<Question[]> {
-    const questions = await db.question.findMany({
-      where: { difficulty },
-      include: {
-        alternatives: true,
-        topic: true,
-      },
-      take: limit,
-    });
-    return questions as Question[];
+    return this.getQuestions({ difficulty, limit });
   }
 
   async getQuestionById(id: string): Promise<Question | null> {
     const question = await db.question.findUnique({
       where: { id },
-      include: {
-        alternatives: true,
-        topic: true,
-      },
+      include: { alternatives: true, topic: true },
     });
     return question as Question | null;
   }
@@ -46,30 +46,37 @@ export class QuestionService {
       difficulty?: 'easy' | 'medium' | 'hard';
     }
   ): Promise<Question[]> {
-    const questions = await db.question.findMany({
-      where: filters,
-      include: {
-        alternatives: true,
-        topic: true,
+    const safeCount = Math.min(Math.max(count, 1), 100);
+    const candidates = await db.question.findMany({
+      where: {
+        topicId: filters?.topicId,
+        difficulty: filters?.difficulty,
       },
-      take: count,
+      include: { alternatives: true, topic: true },
     });
-    return questions as Question[];
+
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+
+    return candidates.slice(0, safeCount) as Question[];
   }
 
   async searchQuestions(query: string): Promise<Question[]> {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) return [];
+
     const questions = await db.question.findMany({
       where: {
         OR: [
-          { enunciation: { contains: query, mode: 'insensitive' } },
-          { topic: { name: { contains: query, mode: 'insensitive' } } },
+          { enunciation: { contains: normalizedQuery, mode: 'insensitive' } },
+          { topic: { name: { contains: normalizedQuery, mode: 'insensitive' } } },
         ],
       },
-      include: {
-        alternatives: true,
-        topic: true,
-      },
+      include: { alternatives: true, topic: true },
       take: 20,
+      orderBy: { createdAt: 'desc' },
     });
     return questions as Question[];
   }
