@@ -5,19 +5,31 @@ node_modules/
 
 # Testing
 coverage/
-.nyc_output
+.nyc_output/
 
 # Next.js
-.next/
-out/
-build/
-dist/
+/.next/
+/out/
 
-# Environment variables
+# Production
+/build/
+/dist/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
 .env
 .env.local
-.env.*.local
-.env.example
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE
 .vscode/
@@ -25,23 +37,20 @@ dist/
 *.swp
 *.swo
 *~
-.DS_Store
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # OS
 Thumbs.db
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
+.DS_Store
 
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Node
+.pnpm-debug.log*
