@@ -1,31 +1,31 @@
 import { questionService } from '@/services/question.service';
 import { NextResponse } from 'next/server';
 
+const difficulties = new Set(['easy', 'medium', 'hard']);
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const topicId = searchParams.get('topicId');
-    const difficulty = searchParams.get('difficulty');
-    const random = searchParams.get('random');
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
+    const topicId = searchParams.get('topicId') || undefined;
+    const difficultyParam = searchParams.get('difficulty') || undefined;
+    const random = searchParams.get('random') === 'true';
+    const requestedLimit = Number.parseInt(searchParams.get('limit') || '20', 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 20;
 
-    let questions;
-
-    if (random === 'true' && limit) {
-      questions = await questionService.getRandomQuestions(limit, {
-        topicId: topicId || undefined,
-        difficulty: (difficulty as 'easy' | 'medium' | 'hard') || undefined,
-      });
-    } else if (topicId) {
-      questions = await questionService.getQuestionsByTopic(topicId);
-    } else if (difficulty) {
-      questions = await questionService.getQuestionsByDifficulty(
-        difficulty as 'easy' | 'medium' | 'hard',
-        limit
+    if (difficultyParam && !difficulties.has(difficultyParam)) {
+      return NextResponse.json(
+        { error: 'Dificuldade inválida' },
+        { status: 400 }
       );
-    } else {
-      questions = [];
     }
+
+    const difficulty = difficultyParam as 'easy' | 'medium' | 'hard' | undefined;
+
+    const questions = random
+      ? await questionService.getRandomQuestions(limit, { topicId, difficulty })
+      : await questionService.getQuestions({ topicId, difficulty, limit });
 
     return NextResponse.json(questions);
   } catch (error) {
