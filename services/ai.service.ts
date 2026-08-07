@@ -1,81 +1,111 @@
-/**
- * AI Service
- * 
- * This service provides an abstraction layer for AI features.
- * The actual implementation can be swapped between providers (Google Gemini, OpenAI, etc.)
- * by changing the environment variables.
- */
-
 export interface AIServiceProvider {
   generateExplanation(question: string, answer: string): Promise<string>;
   generateSummary(content: string): Promise<string>;
   generateStudyPlan(userGoal: string, availableTime: number): Promise<string>;
   generateExercises(topic: string, difficulty: string): Promise<string>;
-  getRecommendations(userProgress: any): Promise<string[]>;
+  getRecommendations(userProgress: unknown): Promise<string[]>;
 }
 
-// Mock implementation for now - will be replaced with actual provider
-class MockAIProvider implements AIServiceProvider {
-  async generateExplanation(question: string, answer: string): Promise<string> {
-    return `Explicação para: ${question}\nResposta: ${answer}\n\nEsta é uma explicação placeholder.`;
+class OpenAIProvider implements AIServiceProvider {
+  private readonly apiKey = process.env.OPENAI_API_KEY;
+  private readonly model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  private readonly baseUrl = (
+    process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+  ).replace(/\/$/, '');
+
+  private async generate(prompt: string): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('OPENAI_API_KEY não configurada. Configure a variável de ambiente para habilitar a IA.');
+    }
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: this.model,
+        temperature: 0.4,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você é o StudyFlow AI, um tutor educacional. Responda em português do Brasil, explique de forma clara e adequada para estudantes e não invente informações.',
+          },
+          { role: 'user', content: prompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const details = await response.text();
+      console.error('AI provider error:', response.status, details);
+      throw new Error('O provedor de IA não respondeu corretamente.');
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = data.choices?.[0]?.message?.content?.trim();
+
+    if (!content) throw new Error('O provedor de IA retornou uma resposta vazia.');
+    return content;
   }
 
-  async generateSummary(content: string): Promise<string> {
-    return `Resumo de: ${content}\n\nEste é um resumo placeholder.`;
+  generateExplanation(question: string, answer: string) {
+    return this.generate(
+      `Explique esta questão para um estudante.\n\nQuestão:\n${question}\n\nResposta escolhida/correta:\n${answer}\n\nMostre o raciocínio passo a passo, sem fornecer conteúdo desnecessário.`
+    );
   }
 
-  async generateStudyPlan(
-    userGoal: string,
-    availableTime: number
-  ): Promise<string> {
-    return `Plano de estudos para: ${userGoal}\nTempo disponível: ${availableTime} minutos\n\nEste é um plano placeholder.`;
+  generateSummary(content: string) {
+    return this.generate(
+      `Faça um resumo de estudo claro e organizado do conteúdo abaixo. Destaque conceitos, fórmulas ou fatos importantes quando existirem.\n\n${content}`
+    );
   }
 
-  async generateExercises(
-    topic: string,
-    difficulty: string
-  ): Promise<string> {
-    return `Exercícios para: ${topic}\nDificuldade: ${difficulty}\n\nEstes são exercícios placeholder.`;
+  generateStudyPlan(userGoal: string, availableTime: number) {
+    return this.generate(
+      `Crie um plano de estudos realista para o objetivo: ${userGoal}. O estudante possui ${availableTime} minutos por dia. Inclua sessões de estudo, exercícios e revisões.`
+    );
   }
 
-  async getRecommendations(userProgress: any): Promise<string[]> {
-    return ['Revisar Matemática', 'Praticar Português', 'Estudar História'];
+  generateExercises(topic: string, difficulty: string) {
+    return this.generate(
+      `Crie 5 exercícios originais sobre ${topic}, com dificuldade ${difficulty}. Não copie questões existentes. Inclua o gabarito e uma explicação curta.`
+    );
+  }
+
+  async getRecommendations(userProgress: unknown): Promise<string[]> {
+    const result = await this.generate(
+      `Analise o progresso abaixo e recomende os próximos assuntos para estudar. Retorne somente uma lista numerada com até 5 recomendações.\n\n${JSON.stringify(userProgress)}`
+    );
+    return result
+      .split('\n')
+      .map((item) => item.replace(/^\s*[-*\d.)]+\s*/, '').trim())
+      .filter(Boolean)
+      .slice(0, 5);
   }
 }
 
-let aiProvider: AIServiceProvider = new MockAIProvider();
+const aiProvider: AIServiceProvider = new OpenAIProvider();
 
-export function setAIProvider(provider: AIServiceProvider) {
-  aiProvider = provider;
-}
+export const setAIProvider = (_provider: AIServiceProvider) => {
+  throw new Error('O provedor de IA é configurado por variáveis de ambiente.');
+};
 
-export async function generateExplanation(
-  question: string,
-  answer: string
-): Promise<string> {
-  return aiProvider.generateExplanation(question, answer);
-}
+export const generateExplanation = (question: string, answer: string) =>
+  aiProvider.generateExplanation(question, answer);
 
-export async function generateSummary(content: string): Promise<string> {
-  return aiProvider.generateSummary(content);
-}
+export const generateSummary = (content: string) =>
+  aiProvider.generateSummary(content);
 
-export async function generateStudyPlan(
-  userGoal: string,
-  availableTime: number
-): Promise<string> {
-  return aiProvider.generateStudyPlan(userGoal, availableTime);
-}
+export const generateStudyPlan = (userGoal: string, availableTime: number) =>
+  aiProvider.generateStudyPlan(userGoal, availableTime);
 
-export async function generateExercises(
-  topic: string,
-  difficulty: string
-): Promise<string> {
-  return aiProvider.generateExercises(topic, difficulty);
-}
+export const generateExercises = (topic: string, difficulty: string) =>
+  aiProvider.generateExercises(topic, difficulty);
 
-export async function getRecommendations(
-  userProgress: any
-): Promise<string[]> {
-  return aiProvider.getRecommendations(userProgress);
-}
+export const getRecommendations = (userProgress: unknown) =>
+  aiProvider.getRecommendations(userProgress);
