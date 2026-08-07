@@ -1,290 +1,134 @@
 # StudyFlow AI - Plataforma de Estudos Inteligente
 
-## 📚 Visão Geral
+StudyFlow AI é uma plataforma de estudos para ENEM, vestibulares e provas escolares, com banco de questões, simulados, acompanhamento de desempenho, revisão espaçada e recursos de IA.
 
-StudyFlow AI é uma plataforma inteligente de estudos desenvolvida para preparar alunos para ENEM, vestibulares e provas escolares. Utiliza inteligência artificial para personalizar o aprendizado e otimizar o desempenho dos usuários.
+## Stack
 
-## ✨ Funcionalidades
+- Next.js 14 + React 18 + TypeScript
+- Tailwind CSS
+- NextAuth v5 (Credentials)
+- PostgreSQL + Prisma
+- Zod
+- Vitest
+- OpenAI-compatible API para recursos de IA
 
-- 📝 **Banco de Questões**: Amplo acervo de questões de diferentes disciplinas e dificuldades
-- 🤖 **IA Inteligente**: Recomendações personalizadas baseadas no desempenho
-- 📊 **Análise de Progresso**: Acompanhamento detalhado do desempenho e evolução
-- 🎯 **Simulados**: Crie e realize simulados personalizados
-- 📋 **Planos de Estudo**: Planos personalizados baseados em metas
-- 🔄 **Sistema de Revisão**: Algoritmo de revisão espaçada para melhor retenção
-- 🏆 **Estatísticas**: Visualização de métricas e taxa de acerto
+## Funcionalidades atuais
 
-## 🛠 Stack Tecnológico
+- Cadastro e login com email e senha
+- Perfil e metas de estudo
+- Banco de questões com filtros por tópico e dificuldade
+- Seleção aleatória de questões
+- Registro de respostas e progresso por tópico
+- Estatísticas e identificação de tópicos fracos
+- Revisão espaçada básica baseada no desempenho
+- Criação e histórico de simulados
+- Endpoint seguro para envio de simulados
+- Serviço de IA para explicações, resumos, planos, exercícios e recomendações
+- Endpoint de health check em `/api/health`
+- Seed de desenvolvimento com matérias e uma questão de exemplo
+- CI com validação Prisma, TypeScript, testes e build
 
-### Frontend
-- **Framework**: Next.js 14 (React)
-- **Estilo**: Tailwind CSS
-- **Componentes**: Radix UI
-- **Autenticação**: NextAuth.js v5
-- **Gerenciamento de Estado**: Zustand
+## Instalação
 
-### Backend
-- **Runtime**: Node.js
-- **Banco de Dados**: PostgreSQL com Prisma ORM
-- **API**: REST (Next.js API Routes)
-- **Validação**: Zod
+Requisitos: Node.js 20+, npm e PostgreSQL 14+.
 
-### DevOps & Ferramentas
-- **Linguagem**: TypeScript
-- **Linting**: ESLint
-- **Formatação**: Prettier
-- **Testes**: Vitest
-
-## 📦 Requisitos
-
-- Node.js 18+
-- npm ou yarn
-- PostgreSQL 14+
-
-## 🚀 Instalação
-
-### 1. Clonar o Repositório
 ```bash
 git clone https://github.com/Laisbc/owner-StudyFlow-AI.git
 cd owner-StudyFlow-AI
-```
-
-### 2. Instalar Dependências
-```bash
-npm install
-```
-
-### 3. Configurar Variáveis de Ambiente
-
-Crie um arquivo `.env.local` na raiz do projeto:
-
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/studyflow"
-
-# NextAuth
-NEXTAUTH_SECRET="seu-secret-aqui"
-NEXTAUTH_URL="http://localhost:3000"
-
-# API Keys (Opcional)
-GOOGLE_CLIENT_ID="seu-google-client-id"
-GOOGLE_CLIENT_SECRET="seu-google-client-secret"
-```
-
-### 4. Configurar Banco de Dados
-
-```bash
-# Executar migrações
+npm ci
+cp .env.example .env.local
+npm run db:generate
+npm run db:validate
 npm run db:push
-
-# (Opcional) Abrir Prisma Studio
-npm run db:studio
-```
-
-### 5. Executar o Servidor de Desenvolvimento
-
-```bash
+npm run db:seed
 npm run dev
 ```
 
-A aplicação estará disponível em `http://localhost:3000`
+Abra `http://localhost:3000`.
 
-## 📋 Scripts Disponíveis
+## Variáveis de ambiente
+
+Consulte `.env.example`. As principais são:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/studyflow"
+NEXTAUTH_SECRET="gere-um-secret-forte"
+NEXTAUTH_URL="http://localhost:3000"
+OPENAI_API_KEY=""
+OPENAI_MODEL="gpt-4o-mini"
+OPENAI_BASE_URL="https://api.openai.com/v1"
+```
+
+A chave da OpenAI é opcional para executar o restante da aplicação, mas é necessária para as funcionalidades de IA.
+
+## Scripts
 
 ```bash
-# Desenvolvimento
-npm run dev              # Inicia servidor de desenvolvimento
-
-# Build & Produção
-npm run build            # Build para produção
-npm start                # Inicia servidor de produção
-
-# Banco de Dados
-npm run db:push          # Sincroniza schema com banco
-npm run db:studio        # Abre Prisma Studio
-npm run db:generate      # Gera cliente Prisma
-
-# Qualidade de Código
-npm run lint             # Executa ESLint
-npm run format           # Formata código com Prettier
-npm run type-check       # Verifica tipos TypeScript
-
-# Testes
-npm test                 # Executa testes
-npm run test:ui          # Executa testes com UI
-npm run test:coverage    # Gera relatório de cobertura
+npm run dev
+npm run build
+npm start
+npm run type-check
+npm run lint
+npm test -- --run
+npm run db:generate
+npm run db:validate
+npm run db:push
+npm run db:seed
+npm run db:studio
 ```
 
-## 📁 Estrutura do Projeto
+## Estrutura
 
-```
-owner-StudyFlow-AI/
-├── app/                          # Next.js App Router
-│   ├── api/                      # API Routes
-│   │   ├── auth/                 # Autenticação
-│   │   ├── questions/            # Questões
-│   │   ├── profile/              # Perfil
-│   │   ├── exams/                # Simulados
-│   │   └── stats/                # Estatísticas
-│   ├── dashboard/                # Dashboard
-│   ├── auth/                     # Páginas de autenticação
-│   ├── layout.tsx                # Layout raiz
-│   ├── page.tsx                  # Página inicial
-│   └── globals.css               # Estilos globais
-├── components/                   # Componentes React
-│   └── ui/                       # Componentes UI reutilizáveis
-├── lib/                          # Funções utilitárias
-│   ├── auth.ts                   # Funções de autenticação
-│   ├── db.ts                     # Cliente Prisma
-│   └── utils.ts                  # Funções auxiliares
-├── services/                     # Serviços de negócio
-│   ├── user.service.ts           # Serviço de usuário
-│   ├── question.service.ts       # Serviço de questões
-│   ├── answer.service.ts         # Serviço de respostas
-│   ├── exam.service.ts           # Serviço de simulados
-│   └── ai.service.ts             # Serviço de IA
-├── schemas/                      # Schemas Zod
-│   ├── auth.ts                   # Schemas de autenticação
-│   ├── profile.ts                # Schemas de perfil
-│   ├── question.ts               # Schemas de questões
-│   └── exam.ts                   # Schemas de exames
-├── types/                        # Tipos TypeScript
-│   └── index.ts                  # Tipos principais
-├── prisma/
-│   └── schema.prisma             # Schema do banco de dados
-└── public/                       # Arquivos estáticos
+```text
+app/                 páginas e API Routes
+components/          componentes React reutilizáveis
+lib/                 Prisma, autenticação e utilitários
+services/            regras de negócio e IA
+schemas/             validações Zod
+types/               tipos TypeScript
+prisma/              schema e seed
+tests/               testes
+.github/workflows/   CI
 ```
 
-## 🔐 Autenticação
+## API principal
 
-O projeto utiliza NextAuth.js v5 com autenticação baseada em credenciais (email/senha).
+- `POST /api/auth/signup`
+- `POST/GET /api/auth/[...nextauth]`
+- `GET/PUT /api/profile`
+- `GET /api/questions`
+- `POST /api/questions/answer`
+- `POST/GET /api/exams`
+- `GET /api/exams/[id]`
+- `POST /api/exams/submit`
+- `POST /api/ai`
+- `GET /api/stats`
+- `GET /api/health`
 
-### Fluxo de Autenticação
+Rotas que manipulam dados pessoais exigem sessão autenticada.
 
-1. **Signup**: Novo usuário cria conta
-2. **Login**: Usuário faz login com email e senha
-3. **Session**: Sessão mantida via JWT
-4. **Logout**: Usuário faz logout
+## IA
 
-## 🗄️ Banco de Dados
+`services/ai.service.ts` usa uma interface de provedor e uma implementação compatível com a API de chat da OpenAI. A chave nunca deve ser colocada no código ou commitada no Git.
 
-Utiliza PostgreSQL com Prisma ORM. Schema principal:
+O serviço gera explicações, resumos, planos de estudo, exercícios e recomendações. Os exercícios gerados são solicitados como conteúdo original, evitando copiar questões protegidas.
 
-- **User**: Dados do usuário
-- **Profile**: Perfil e metas de estudo
-- **Subject**: Disciplinas
-- **Topic**: Tópicos dentro de disciplinas
-- **Question**: Questões de estudo
-- **Alternative**: Alternativas de questões
-- **Answer**: Respostas do usuário
-- **Progress**: Progresso por tópico
-- **Exam**: Simulados
-- **StudyPlan**: Planos de estudo
+## Banco de dados
 
-## 🤖 Integração com IA
+O Prisma possui modelos para usuários, perfis, matérias, tópicos, questões, alternativas, respostas, progresso, revisões, planos de estudo e simulados.
 
-O serviço de IA (`services/ai.service.ts`) fornece uma abstração para:
+Para desenvolvimento, `npm run db:seed` cria matérias básicas e uma questão de demonstração. Dados reais de provas devem ser inseridos somente quando houver direito/licença para utilizá-los.
 
-- Gerar explicações de questões
-- Resumir conteúdos
-- Criar planos de estudo personalizados
-- Gerar exercícios
-- Fornecer recomendações
+## Qualidade
 
-Atualmente usa mock, mas pode ser facilmente integrado com:
-- Google Gemini
-- OpenAI GPT
-- Outras APIs de IA
+O workflow `.github/workflows/ci.yml` executa Prisma validation/generation, type-check, testes e build em cada push ou pull request para `main`.
 
-## 📊 API Endpoints
+Antes de considerar uma funcionalidade pronta, ela deve passar por validação de código e, quando aplicável, por teste de integração com PostgreSQL.
 
-### Autenticação
-- `POST /api/auth/signup` - Criar nova conta
-- `POST /api/auth/[...nextauth]` - Endpoints NextAuth
+## Status
 
-### Perfil
-- `GET /api/profile` - Obter perfil do usuário
-- `PUT /api/profile` - Atualizar perfil
+O projeto está em fase de MVP. A base principal está implementada, mas integrações externas e validações de produção ainda dependem da configuração do ambiente.
 
-### Questões
-- `GET /api/questions` - Listar questões
-- `GET /api/questions/[id]` - Obter questão específica
-- `POST /api/questions/answer` - Submeter resposta
+## Licença
 
-### Simulados
-- `POST /api/exams` - Criar simulado
-- `GET /api/exams` - Listar simulados do usuário
-- `GET /api/exams/[id]` - Obter simulado específico
-
-### Estatísticas
-- `GET /api/stats` - Obter estatísticas do usuário
-
-## 🧪 Testes
-
-O projeto utiliza Vitest para testes unitários. Exemplos:
-
-```bash
-# Executar todos os testes
-npm test
-
-# Modo watch
-npm test -- --watch
-
-# Com cobertura
-npm run test:coverage
-```
-
-## 📝 Padrões de Código
-
-### TypeScript
-- Tipos explícitos em funções
-- Interfaces para estruturas de dados
-- Genéricos quando apropriado
-
-### Componentes React
-- Componentes funcionais com hooks
-- Props bem tipados
-- Separação de concerns
-
-### Services
-- Lógica de negócio centralizada
-- Métodos reutilizáveis
-- Tratamento de erros consistente
-
-## 🚧 Roadmap
-
-- [ ] Autenticação social (Google, GitHub)
-- [ ] Integração com IA avançada (GPT-4, Gemini)
-- [ ] App mobile (React Native)
-- [ ] Sistema de comentários em questões
-- [ ] Gamificação (badges, rankings)
-- [ ] Integração com plataformas educacionais
-- [ ] Análise preditiva de desempenho
-- [ ] Sistema de notificações
-
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
-
-## 📧 Contato
-
-Para dúvidas ou sugestões, abra uma issue ou entre em contato com os mantenedores.
-
-## 🙏 Agradecimentos
-
-- Comunidade Next.js
-- Contribuidores do Prisma
-- NextAuth.js team
-- Tailwind CSS
-
----
-
-**Desenvolvido com ❤️ para educação**
+MIT.
