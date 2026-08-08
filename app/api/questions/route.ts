@@ -3,6 +3,13 @@ import { NextResponse } from 'next/server';
 
 const difficulties = new Set(['easy', 'medium', 'hard']);
 
+function sanitizeQuestion(question: any) {
+  return {
+    ...question,
+    alternatives: question.alternatives.map(({ isCorrect: _isCorrect, ...alternative }: any) => alternative),
+  };
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -15,24 +22,17 @@ export async function GET(req: Request) {
       : 20;
 
     if (difficultyParam && !difficulties.has(difficultyParam)) {
-      return NextResponse.json(
-        { error: 'Dificuldade inválida' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Dificuldade inválida' }, { status: 400 });
     }
 
     const difficulty = difficultyParam as 'easy' | 'medium' | 'hard' | undefined;
-
     const questions = random
       ? await questionService.getRandomQuestions(limit, { topicId, difficulty })
       : await questionService.getQuestions({ topicId, difficulty, limit });
 
-    return NextResponse.json(questions);
+    return NextResponse.json(questions.map(sanitizeQuestion));
   } catch (error) {
     console.error('Questions fetch error:', error);
-    return NextResponse.json(
-      { error: 'Erro ao buscar questões' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erro ao buscar questões' }, { status: 500 });
   }
 }
