@@ -1,5 +1,4 @@
 import { db } from '@/lib/db';
-import { questionService } from './question.service';
 
 export class ExamService {
   async createExam(
@@ -14,123 +13,107 @@ export class ExamService {
       difficulty?: ('easy' | 'medium' | 'hard')[];
     }
   ) {
-    // Create exam
+    if (!subjects.length) throw new Error('Selecione ao menos uma matéria');
+    if (totalQuestions < 1 || totalQuestions > 100) throw new Error('Quantidade de questões inválida');
+
+    const candidates = await db.question.findMany({
+      where: {
+        topic: { subject: { id: { in: subjects } } },
+        ...(options?.difficulty?.length
+          ? { difficulty: { in: options.difficulty } }
+          : {}),
+      },
+      include: { alternatives: true },
+    });
+
+    const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(totalQuestions, shuffled.length));
+    if (!selected.length) throw new Error('Nenhuma questão disponível para os filtros selecionados');
+
     const exam = await db.exam.create({
       data: {
         userId,
         title,
         description: options?.description,
-        totalQuestions,
+        totalQuestions: selected.length,
         duration: options?.duration,
-        passPercentage: options?.passPercentage || 60,
+        passPercentage: options?.passPercentage ?? 60,
+        subjects: {
+          create: subjects.map((subjectId) => ({ subjectId })),
+        },
+        questions: {
+          create: selected.map((question, index) => ({
+            questionId: question.id,
+            order: index + 1,
+          })),
+        },
+      },
+      include: {
+        subjects: true,
+        questions: { include: { question: { include: { alternatives: true } } }, orderBy: { order: 'asc' } },
       },
     });
-
-    // Add subjects to exam
-    for (const subjectId of subjects) {
-      await db.examSubject.create({
-        data: {
-          examId: exam.id,
-          subjectId,
-        },
-      });
-    }
-
-    // Get random questions
-    const questions = await db.question.findMany({
-      where: {
-        topic: {
-          subject: {
-            id: { in: subjects },
-          },
-        },
-        ...(options?.difficulty && {
-          difficulty: { in: options.difficulty },
-        }),
-      },
-      take: totalQuestions,
-    });
-
-    // Add questions to exam
-    for (let i = 0; i < questions.length; i++) {
-      await db.examQuestion.create({
-        data: {
-          examId: exam.id,
-          questionId: questions[i].id,
-          order: i + 1,
-        },
-      });
-    }
 
     return exam;
   }
 
-  async getExamById(id: string) {
+  async getExamById(id: string, userId?: string) {
     const exam = await db.exam.findUnique({
       where: { id },
       include: {
         questions: {
-          include: {
-            question: {
-              include: { alternatives: true },
-            },
-          },
+          include: { question: { include: { alternatives: true } } },
           orderBy: { order: 'asc' },
         },
+        results: true,
       },
     });
+    if (!exam) return null;
+    if (userId && exam.userId !== userId) throw new Error('FORBIDDEN');
     return exam;
   }
 
   async submitExam(
     examId: string,
+    userId: string,
     answers: Array<{ questionId: string; selectedAnswer: string }>
   ) {
-    const exam = await this.getExamById(examId);
+    const exam = await this.getExamById(examId, userId);
     if (!exam) throw new Error('Exam not found');
 
+    const validQuestionIds = new Set(exam.questions.map((item) => item.questionId));
+    const uniqueAnswers = new Map(
+      answers.filter((answer) => validQuestionIds.has(answer.questionId)).map((answer) => [answer.questionId, answer])
+    );
+
     let correctCount = 0;
-
-    for (const answer of answers) {
-      const question = exam.questions.find(
-        (q) => q.questionId === answer.questionId
-      );
-      if (!question) continue;
-
-      const alternative = question.question.alternatives.find(
-        (alt) => alt.letter === answer.selectedAnswer
-      );
+    for (const answer of uniqueAnswers.values()) {
+      const item = exam.questions.find((q) => q.questionId === answer.questionId);
+      const alternative = item?.question.alternatives.find((alt) => alt.letter === answer.selectedAnswer);
       if (alternative?.isCorrect) correctCount++;
     }
 
-    const percentage = (correctCount / exam.totalQuestions) * 100;
+    const answeredCount = uniqueAnswers.size;
+    const wrongCount = exam.totalQuestions - correctCount;
+    const percentage = exam.totalQuestions > 0 ? (correctCount / exam.totalQuestions) * 100 : 0;
 
-    // Save result
-    const result = await db.examResult.create({
+    return db.examResult.create({
       data: {
         examId,
         totalQuestions: exam.totalQuestions,
         correctAnswers: correctCount,
-        wrongAnswers: exam.totalQuestions - correctCount,
+        wrongAnswers: wrongCount,
         percentage,
-        timeTaken: exam.finishedAt && exam.startedAt
-          ? Math.floor(
-              (exam.finishedAt.getTime() - exam.startedAt.getTime()) / 60000
-            )
-          : undefined,
       },
     });
-
-    return result;
   }
 
   async getUserExams(userId: string) {
-    const exams = await db.exam.findMany({
+    return db.exam.findMany({
       where: { userId },
       include: { results: true },
       orderBy: { createdAt: 'desc' },
     });
-    return exams;
   }
 }
 
