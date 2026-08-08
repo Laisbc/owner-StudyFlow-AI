@@ -1,4 +1,5 @@
 import bcryptjs from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 
 const SALT_ROUNDS = 10;
 
@@ -14,5 +15,5 @@ export async function verifyPassword(
 }
 
 export function generateToken(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  return randomBytes(32).toString('hex');
 }
