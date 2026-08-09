@@ -1,4 +1,4 @@
-import NextAuth, { type Auth } from 'next-auth';
+import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { userService } from '@/services/user.service';
 
@@ -60,4 +60,4 @@ const nextAuth = NextAuth({
 export const handlers = nextAuth.handlers;
 export const signIn = nextAuth.signIn;
 export const signOut = nextAuth.signOut;
-export const auth: Auth = nextAuth.auth;
+export const auth = nextAuth.auth;
