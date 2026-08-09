@@ -14,12 +14,8 @@ export class ExamService {
 
     return db.exam.create({
       data: {
-        userId,
-        title,
-        description: options?.description,
-        totalQuestions: selected.length,
-        duration: options?.duration,
-        passPercentage: options?.passPercentage ?? 60,
+        userId, title, description: options?.description, totalQuestions: selected.length,
+        duration: options?.duration, passPercentage: options?.passPercentage ?? 60,
         subjects: { create: subjects.map((subjectId) => ({ subjectId })) },
         questions: { create: selected.map((question, index) => ({ questionId: question.id, order: index + 1 })) },
       },
