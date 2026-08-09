@@ -13,7 +13,7 @@ export async function GET(
 
     return NextResponse.json({
       ...question,
-      alternatives: question.alternatives.map(({ isCorrect: _isCorrect, ...alternative }) => alternative),
+      alternatives: (question.alternatives ?? []).map(({ isCorrect: _isCorrect, ...alternative }) => alternative),
     });
   } catch (error) {
     console.error('Question fetch error:', error);
