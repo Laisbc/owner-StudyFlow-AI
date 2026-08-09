@@ -1,8 +1,8 @@
-import NextAuth from 'next-auth';
+import NextAuth, { type Auth } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { userService } from '@/services/user.service';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   providers: [
     CredentialsProvider({
       credentials: {
@@ -14,16 +14,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error('Email e senha são obrigatórios');
         }
 
-        const isValid = await userService.verifyUserPassword(
-          credentials.email as string,
-          credentials.password as string
-        );
+        const email = String(credentials.email);
+        const password = String(credentials.password);
+        const isValid = await userService.verifyUserPassword(email, password);
 
         if (!isValid) {
           throw new Error('Email ou senha incorretos');
         }
 
-        const user = await userService.getUserByEmail(credentials.email as string);
+        const user = await userService.getUserByEmail(email);
         if (!user) {
           throw new Error('Usuário não encontrado');
         }
@@ -57,3 +56,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
+
+export const handlers = nextAuth.handlers;
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;
+export const auth: Auth = nextAuth.auth;
